@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel 価格計算機</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; padding: 20px; }
+        select, button { margin: 10px 0; padding: 5px; }
+        #result { margin-top: 20px; }
+        .highlight { color: #0000FF; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Pixel 価格計算機</h1>
+    <div>
+        <label for="tradeIn">下取り端末:</label>
+        <select id="tradeIn"></select>
+    </div>
+    <div>
+        <label for="purchase">購入端末:</label>
+        <select id="purchase"></select>
+    </div>
+    <div>
+        <label for="storage">ストレージ:</label>
+        <select id="storage"></select>
+    </div>
+    <button onclick="calculate()">計算</button>
+    <div id="result"></div>
+
+    <script>
+    const pixelData = {
+      'Pixel 9': {
+        '128GB': { price: 128900, storeCredit: 24200 },
+        '256GB': { price: 143900, storeCredit: 24200 }
+      },
+      'Pixel 9 Pro': {
+        '128GB': { price: 159900, storeCredit: 32100 },
+        '256GB': { price: 174900, storeCredit: 32100 },
+        '512GB': { price: 194900, storeCredit: 32100 }
+      },
+      'Pixel 9 Pro XL': {
+        '128GB': { price: 177900, storeCredit: 50100 },
+        '256GB': { price: 192900, storeCredit: 50100 },
+        '512GB': { price: 212900, storeCredit: 50100 }
+      },
+      'Pixel 9 Pro Fold': {
+        '256GB': { price: 257500, storeCredit: 57700 },
+        '512GB': { price: 277500, storeCredit: 57700 }
+      }
+    };
+
+    const tradeInData = {
+      'Pixel Fold': { values: [75000, 90000, 100000], launchPrice: 253000 },
+      'Pixel 8 Pro': { values: [70000, 88000, 90000], launchPrice: 159900 },
+      'Pixel 8': { values: [64900, 70000, 75000], launchPrice: 112900 },
+      'Pixel 7a': { values: [28000, 33000, 35000], launchPrice: 62700 },
+      'Pixel 7 Pro': { values: [50000, 70000, 85000], launchPrice: 124300 },
+      'Pixel 7': { values: [41900, 65000, 70000], launchPrice: 82500 },
+      'Pixel 6a': { values: [23000, 25000, 30000], launchPrice: 53980 },
+      'Pixel 6 Pro': { values: [45000, 65000, 80000], launchPrice: 116600 },
+      'Pixel 6': { values: [36900, 60000, 65000], launchPrice: 74800 },
+      'Pixel 5a (5G)': { values: [21000, 23000, 25000], launchPrice: 51700 },
+      'Pixel 5': { values: [35000, 55000, 60000], launchPrice: 74800 },
+      'Pixel 4a 5G': { values: [20000, 22000, 23000], launchPrice: 60500 },
+      'Pixel 4a': { values: [18000, 20000, 21000], launchPrice: 42900 },
+      'Pixel 4 XL': { values: [32000, 37000, 42000], launchPrice: 116600 },
+      'Pixel 4': { values: [30000, 35000, 40000], launchPrice: 89980 },
+      'Pixel 3a XL': { values: [7800, 7800, 7800], launchPrice: 60000 },
+      'Pixel 3a': { values: [7800, 7800, 7800], launchPrice: 48600 },
+      'Pixel 3 XL': { values: [7800, 7800, 7800], launchPrice: 119000 },
+      'Pixel 3': { values: [7800, 7800, 7800], launchPrice: 95000 }
+    };
+
+    function populateSelect(selectId, data) {
+        const select = document.getElementById(selectId);
+        select.innerHTML = '<option value="">選択してください</option>';
+        for (const key in data) {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = key;
+            select.appendChild(option);
+        }
+    }
+
+    populateSelect('tradeIn', tradeInData);
+    populateSelect('purchase', pixelData);
+
+    document.getElementById('purchase').addEventListener('change', function() {
+        const storageSelect = document.getElementById('storage');
+        storageSelect.innerHTML = '<option value="">選択してください</option>';
+        const selectedPurchase = this.value;
+        if (selectedPurchase in pixelData) {
+            for (const storage in pixelData[selectedPurchase]) {
+                const option = document.createElement('option');
+                option.value = storage;
+                option.textContent = storage;
+                storageSelect.appendChild(option);
+            }
+        }
+    });
+
+    function calculate() {
+        const tradeIn = document.getElementById('tradeIn').value;
+        const purchase = document.getElementById('purchase').value;
+        const storage = document.getElementById('storage').value;
+        const resultDiv = document.getElementById('result');
+
+        if (!tradeIn || !purchase || !storage) {
+            resultDiv.innerHTML = '全ての項目を選択してください。';
+            return;
+        }
+
+        const tradeInValue = Math.max(...tradeInData[tradeIn].values);
+        const tradeInLaunchPrice = tradeInData[tradeIn].launchPrice;
+        const tradeInPercentage = (tradeInValue / tradeInLaunchPrice * 100).toFixed(1);
+        const { price, storeCredit } = pixelData[purchase][storage];
+        const effectivePrice = price - storeCredit - tradeInValue;
+
+        resultDiv.innerHTML = `
+            <h2>計算結果</h2>
+            <p>購入端末: ${purchase} (${storage})</p>
+            <p>基本価格: ¥${price.toLocaleString()}</p>
+            <p>ストアクレジット: ¥${storeCredit.toLocaleString()}</p>
+            <p>下取り価格: ¥${tradeInValue.toLocaleString()} 
+               <span class="highlight">(発売時価格の${tradeInPercentage}%)</span></p>
+            <p>実質価格: ¥${effectivePrice.toLocaleString()}</p>
+        `;
+    }
+    </script>
+</body>
+</html>
